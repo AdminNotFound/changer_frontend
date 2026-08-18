@@ -17,6 +17,7 @@ import {
 } from '@/features/resume/schemas/resume-snapshot-schema';
 import { useAutoSaveResume } from '@/features/resume/hooks/use-auto-save-resume';
 import { useResume } from '@/features/resume/hooks/use-resumes';
+import { sanitizeForSave } from '@/features/resume/utils/sanitize-resume-snapshot';
 import { EditorLayout } from './editor-layout';
 import { EditorSkeleton } from './editor-skeleton';
 import { EditorToolbar } from './editor-toolbar';
@@ -25,41 +26,6 @@ import { VersionHistoryPanel } from './version-history-panel';
 type ResumeEditorProps = {
   resumeId: string;
 };
-
-function omitInternalId<T extends object>(item: T): T {
-  const { id: _id, ...rest } = item as T & { id?: string };
-  return rest as T;
-}
-
-export function sanitizeForSave(values: ResumeSnapshot): ResumeSnapshot {
-  return {
-    personalInfo: values.personalInfo ?? {},
-    summary: values.summary ?? '',
-    skills: (values.skills ?? []).map((s) => s.trim()).filter(Boolean),
-    experience: (values.experience ?? []).map((item) => {
-      const rest = omitInternalId(item);
-      return {
-        ...rest,
-        highlights: (rest.highlights ?? []).map((h) => h.trim()).filter(Boolean),
-      };
-    }),
-    education: (values.education ?? []).map(omitInternalId),
-    projects: (values.projects ?? []).map((item) => {
-      const rest = omitInternalId(item);
-      return {
-        ...rest,
-        highlights: (rest.highlights ?? []).map((h) => h.trim()).filter(Boolean),
-      };
-    }),
-    certifications: (values.certifications ?? []).map(omitInternalId),
-    languages: (values.languages ?? [])
-      .map(omitInternalId)
-      .filter((l) => l.name?.trim()),
-    socialLinks: (values.socialLinks ?? [])
-      .map(omitInternalId)
-      .filter((l) => l.url?.trim()),
-  };
-}
 
 export function ResumeEditor({ resumeId }: ResumeEditorProps) {
   const { data: resume, isLoading, isError, error, refetch } = useResume(resumeId);

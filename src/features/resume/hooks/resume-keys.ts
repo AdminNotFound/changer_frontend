@@ -13,6 +13,11 @@ export const resumeKeys = {
     [...resumeKeys.versions(resumeId), 'compare', params] as const,
 };
 
+export const importKeys = {
+  all: ['import'] as const,
+  job: (jobId: string) => [...importKeys.all, 'job', jobId] as const,
+};
+
 export const dashboardKeys = {
   all: ['dashboard'] as const,
   statistics: () => [...dashboardKeys.all, 'statistics'] as const,

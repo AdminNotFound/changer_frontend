@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { AlertTriangle, ChevronLeft, ChevronRight, Search } from 'lucide-react';
+import Link from 'next/link';
+import { AlertTriangle, ChevronLeft, ChevronRight, Search, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { EmptyState } from '@/components/common/empty-state';
@@ -56,7 +57,15 @@ export function ResumeListPage() {
             Create a base resume, then open it to edit and tailor for jobs.
           </p>
         </div>
-        <CreateResumeDialog />
+        <div className="flex flex-wrap gap-2">
+          <Button asChild variant="outline">
+            <Link href="/resumes/import">
+              <Upload className="h-4 w-4 mr-2" />
+              Import resume
+            </Link>
+          </Button>
+          <CreateResumeDialog />
+        </div>
       </div>
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center">

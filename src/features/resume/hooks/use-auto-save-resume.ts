@@ -39,9 +39,11 @@ export function useAutoSaveResume({
   const sanitizeRef = useRef(sanitizeForSave);
   const getValuesRef = useRef(getValues);
 
-  mutateAsyncRef.current = mutateAsync;
-  sanitizeRef.current = sanitizeForSave;
-  getValuesRef.current = getValues;
+  useEffect(() => {
+    mutateAsyncRef.current = mutateAsync;
+    sanitizeRef.current = sanitizeForSave;
+    getValuesRef.current = getValues;
+  });
 
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
