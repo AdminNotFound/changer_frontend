@@ -14,11 +14,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { formatVersionDate } from '@/features/resume/utils/version-format';
+import { TemplateSelector } from './template-selector';
+import { PdfActionsMenu } from './pdf-actions-menu';
+import type { PdfGenerationStatus } from '@/types/resume-pdf';
 
 export type SaveStatus = 'idle' | 'saving' | 'saved' | 'error';
 
 type EditorToolbarProps = {
   title: string;
+  resumeId: string;
+  templateId: string;
   isDirty: boolean;
   saveStatus: SaveStatus;
   apiError: string | null;
@@ -27,10 +32,15 @@ type EditorToolbarProps = {
   lastSavedAt: string | null;
   currentVersionNumber: number;
   onOpenVersionHistory: () => void;
+  pdfStatus: PdfGenerationStatus;
+  onPreviewPdf: () => void;
+  onDownloadPdf: () => void;
 };
 
 export function EditorToolbar({
   title,
+  resumeId,
+  templateId,
   isDirty,
   saveStatus,
   apiError,
@@ -39,6 +49,9 @@ export function EditorToolbar({
   lastSavedAt,
   currentVersionNumber,
   onOpenVersionHistory,
+  pdfStatus,
+  onPreviewPdf,
+  onDownloadPdf,
 }: EditorToolbarProps) {
   const [leaveOpen, setLeaveOpen] = useState(false);
   const isSavingState = isSaving || saveStatus === 'saving';
@@ -135,6 +148,12 @@ export function EditorToolbar({
               <History className="h-4 w-4 mr-1.5" />
               History
             </Button>
+            <TemplateSelector resumeId={resumeId} currentTemplateId={templateId} />
+            <PdfActionsMenu
+              status={pdfStatus}
+              onPreview={onPreviewPdf}
+              onDownload={onDownloadPdf}
+            />
             <Button
               type="button"
               onClick={onSave}

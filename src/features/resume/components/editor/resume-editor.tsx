@@ -16,11 +16,13 @@ import {
   type ResumeSnapshot,
 } from '@/features/resume/schemas/resume-snapshot-schema';
 import { useAutoSaveResume } from '@/features/resume/hooks/use-auto-save-resume';
+import { usePdfGeneration } from '@/features/resume/hooks/use-pdf-generation';
 import { useResume } from '@/features/resume/hooks/use-resumes';
 import { sanitizeForSave } from '@/features/resume/utils/sanitize-resume-snapshot';
 import { EditorLayout } from './editor-layout';
 import { EditorSkeleton } from './editor-skeleton';
 import { EditorToolbar } from './editor-toolbar';
+import { PdfPreviewDialog } from './pdf-preview-dialog';
 import { VersionHistoryPanel } from './version-history-panel';
 
 type ResumeEditorProps = {
@@ -30,6 +32,7 @@ type ResumeEditorProps = {
 export function ResumeEditor({ resumeId }: ResumeEditorProps) {
   const { data: resume, isLoading, isError, error, refetch } = useResume(resumeId);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [pdfPreviewOpen, setPdfPreviewOpen] = useState(false);
   const [manualApiError, setManualApiError] = useState<string | null>(null);
   const loadedResumeIdRef = React.useRef<string | null>(null);
 
@@ -59,6 +62,45 @@ export function ResumeEditor({ resumeId }: ResumeEditorProps) {
     isReady: Boolean(resume),
     enabled: Boolean(resume),
   });
+
+  const flushDraftForPdf = useCallback(async () => {
+    await flushSave(getValues());
+  }, [flushSave, getValues]);
+
+  const {
+    status: pdfStatus,
+    error: pdfError,
+    preview: pdfPreview,
+    previewPdf,
+    downloadPdf,
+    downloadPreview,
+    reset: resetPdf,
+    isGenerating: isPdfGenerating,
+  } = usePdfGeneration({
+    resumeId,
+    source: 'draft',
+    flushSave: flushDraftForPdf,
+    hasUnsavedChanges,
+  });
+
+  const handlePreviewPdf = useCallback(() => {
+    setPdfPreviewOpen(true);
+    void previewPdf();
+  }, [previewPdf]);
+
+  const handleDownloadPdf = useCallback(() => {
+    void downloadPdf();
+  }, [downloadPdf]);
+
+  const handlePdfPreviewOpenChange = useCallback(
+    (open: boolean) => {
+      setPdfPreviewOpen(open);
+      if (!open && !isPdfGenerating) {
+        resetPdf();
+      }
+    },
+    [isPdfGenerating, resetPdf]
+  );
 
   useEffect(() => {
     if (!resume?.draft || loadedResumeIdRef.current === resumeId) return;
@@ -135,6 +177,8 @@ export function ResumeEditor({ resumeId }: ResumeEditorProps) {
       <div className="min-h-[calc(100vh-4rem)] -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
         <EditorToolbar
           title={resume.title}
+          resumeId={resumeId}
+          templateId={resume.templateId}
           isDirty={hasUnsavedChanges}
           saveStatus={saveStatus}
           apiError={apiError}
@@ -143,9 +187,22 @@ export function ResumeEditor({ resumeId }: ResumeEditorProps) {
           lastSavedAt={lastSavedAt ?? resume.lastSavedAt}
           currentVersionNumber={resume.currentVersionNumber}
           onOpenVersionHistory={() => setHistoryOpen(true)}
+          pdfStatus={pdfStatus}
+          onPreviewPdf={handlePreviewPdf}
+          onDownloadPdf={handleDownloadPdf}
         />
         <EditorLayout templateId={resume.templateId} />
       </div>
+
+      <PdfPreviewDialog
+        open={pdfPreviewOpen}
+        onOpenChange={handlePdfPreviewOpenChange}
+        status={pdfStatus}
+        error={pdfError}
+        preview={pdfPreview}
+        onRetry={handlePreviewPdf}
+        onDownload={downloadPreview}
+      />
 
       <VersionHistoryPanel
         resumeId={resumeId}
