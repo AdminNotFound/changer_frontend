@@ -26,21 +26,38 @@ type ResumeEditorProps = {
   resumeId: string;
 };
 
+function omitInternalId<T extends object>(item: T): T {
+  const { id: _id, ...rest } = item as T & { id?: string };
+  return rest as T;
+}
+
 export function sanitizeForSave(values: ResumeSnapshot): ResumeSnapshot {
   return {
-    ...values,
+    personalInfo: values.personalInfo ?? {},
     summary: values.summary ?? '',
     skills: (values.skills ?? []).map((s) => s.trim()).filter(Boolean),
-    experience: (values.experience ?? []).map((item) => ({
-      ...item,
-      highlights: (item.highlights ?? []).map((h) => h.trim()).filter(Boolean),
-    })),
-    projects: (values.projects ?? []).map((item) => ({
-      ...item,
-      highlights: (item.highlights ?? []).map((h) => h.trim()).filter(Boolean),
-    })),
-    languages: (values.languages ?? []).filter((l) => l.name?.trim()),
-    socialLinks: (values.socialLinks ?? []).filter((l) => l.url?.trim()),
+    experience: (values.experience ?? []).map((item) => {
+      const rest = omitInternalId(item);
+      return {
+        ...rest,
+        highlights: (rest.highlights ?? []).map((h) => h.trim()).filter(Boolean),
+      };
+    }),
+    education: (values.education ?? []).map(omitInternalId),
+    projects: (values.projects ?? []).map((item) => {
+      const rest = omitInternalId(item);
+      return {
+        ...rest,
+        highlights: (rest.highlights ?? []).map((h) => h.trim()).filter(Boolean),
+      };
+    }),
+    certifications: (values.certifications ?? []).map(omitInternalId),
+    languages: (values.languages ?? [])
+      .map(omitInternalId)
+      .filter((l) => l.name?.trim()),
+    socialLinks: (values.socialLinks ?? [])
+      .map(omitInternalId)
+      .filter((l) => l.url?.trim()),
   };
 }
 
@@ -56,14 +73,7 @@ export function ResumeEditor({ resumeId }: ResumeEditorProps) {
     mode: 'onSubmit',
   });
 
-  const { reset, handleSubmit, control, formState: { isDirty } } = form;
-
-  const handleSaved = useCallback(
-    (savedResume: PublicResume) => {
-      reset(normalizeResumeSnapshot(savedResume.draft), { keepValues: true });
-    },
-    [reset]
-  );
+  const { reset, handleSubmit, watch, getValues } = form;
 
   const {
     seedLastSaved,
@@ -74,22 +84,23 @@ export function ResumeEditor({ resumeId }: ResumeEditorProps) {
     lastSavedAt,
     apiError: autoSaveError,
     isSaving,
+    hasUnsavedChanges,
   } = useAutoSaveResume({
     resumeId,
-    control,
+    watch,
+    getValues,
     sanitizeForSave,
-    isReady: Boolean(resume?.draft),
+    isReady: Boolean(resume),
     enabled: Boolean(resume),
-    onSaved: handleSaved,
   });
 
   useEffect(() => {
-    if (!resume?.draft || loadedResumeIdRef.current === resume.id) return;
+    if (!resume?.draft || loadedResumeIdRef.current === resumeId) return;
     const normalized = normalizeResumeSnapshot(resume.draft);
     reset(normalized);
     seedLastSaved(normalized, resume.lastSavedAt);
-    loadedResumeIdRef.current = resume.id;
-  }, [resume, reset, seedLastSaved]);
+    loadedResumeIdRef.current = resumeId;
+  }, [resumeId, resume, reset, seedLastSaved]);
 
   const handleRestore = useCallback(
     (restoredResume: PublicResume) => {
@@ -158,7 +169,7 @@ export function ResumeEditor({ resumeId }: ResumeEditorProps) {
       <div className="min-h-[calc(100vh-4rem)] -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
         <EditorToolbar
           title={resume.title}
-          isDirty={isDirty}
+          isDirty={hasUnsavedChanges}
           saveStatus={saveStatus}
           apiError={apiError}
           onSave={() => void onManualSave()}

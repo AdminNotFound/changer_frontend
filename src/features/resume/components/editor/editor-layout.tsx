@@ -1,7 +1,8 @@
 'use client';
 
-import React from 'react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import React, { useState } from 'react';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils/cn';
 import { ResumePreview } from './preview/resume-preview';
 import { PersonalInfoSection } from './sections/personal-info-section';
 import { SummarySection } from './sections/summary-section';
@@ -34,30 +35,34 @@ function EditorFormSections() {
 }
 
 export function EditorLayout({ templateId }: EditorLayoutProps) {
+  const [mobileTab, setMobileTab] = useState('edit');
+
   return (
     <>
-      {/* Mobile: tabs */}
-      <div className="lg:hidden">
-        <Tabs defaultValue="edit">
+      <div className="lg:hidden mb-4">
+        <Tabs value={mobileTab} onValueChange={setMobileTab}>
           <TabsList>
             <TabsTrigger value="edit">Edit</TabsTrigger>
             <TabsTrigger value="preview">Preview</TabsTrigger>
           </TabsList>
-          <TabsContent value="edit">
-            <EditorFormSections />
-          </TabsContent>
-          <TabsContent value="preview">
-            <ResumePreview templateId={templateId} />
-          </TabsContent>
         </Tabs>
       </div>
 
-      {/* Desktop: split pane */}
-      <div className="hidden lg:grid lg:grid-cols-2 lg:gap-6 xl:gap-8 min-h-[calc(100vh-12rem)]">
-        <div className="overflow-y-auto pr-2 max-h-[calc(100vh-12rem)]">
+      <div className="lg:grid lg:grid-cols-2 lg:gap-6 xl:gap-8 min-h-[calc(100vh-12rem)]">
+        <div
+          className={cn(
+            'overflow-y-auto lg:pr-2 max-h-[calc(100vh-12rem)]',
+            mobileTab !== 'edit' && 'hidden lg:block'
+          )}
+        >
           <EditorFormSections />
         </div>
-        <div className="overflow-y-auto pl-2 max-h-[calc(100vh-12rem)]">
+        <div
+          className={cn(
+            'overflow-y-auto lg:pl-2 max-h-[calc(100vh-12rem)]',
+            mobileTab !== 'preview' && 'hidden lg:block'
+          )}
+        >
           <ResumePreview templateId={templateId} />
         </div>
       </div>

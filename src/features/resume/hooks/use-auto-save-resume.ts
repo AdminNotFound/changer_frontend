@@ -1,11 +1,9 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { useWatch, type Control } from 'react-hook-form';
+import type { UseFormGetValues, UseFormWatch } from 'react-hook-form';
 import type { ResumeSnapshot } from '@/features/resume/schemas/resume-snapshot-schema';
 import { handleApiError } from '@/lib/api/error';
-import { useDebouncedValue } from '@/hooks/use-debounced-value';
-import type { PublicResume } from '@/types/resume';
 import type { SaveStatus } from '../components/editor/editor-toolbar';
 import { useSaveResumeMutation } from './use-save-resume-mutation';
 
@@ -15,77 +13,95 @@ function serializeSnapshot(snapshot: ResumeSnapshot): string {
 
 type UseAutoSaveResumeOptions = {
   resumeId: string;
-  control: Control<ResumeSnapshot>;
+  watch: UseFormWatch<ResumeSnapshot>;
+  getValues: UseFormGetValues<ResumeSnapshot>;
   sanitizeForSave: (values: ResumeSnapshot) => ResumeSnapshot;
   isReady: boolean;
   enabled?: boolean;
   debounceMs?: number;
-  onSaved?: (resume: PublicResume) => void;
 };
 
 export function useAutoSaveResume({
   resumeId,
-  control,
+  watch,
+  getValues,
   sanitizeForSave,
   isReady,
   enabled = true,
   debounceMs = 800,
-  onSaved,
 }: UseAutoSaveResumeOptions) {
-  const watchedValues = useWatch({ control }) as ResumeSnapshot;
-  const debouncedValues = useDebouncedValue(watchedValues, debounceMs);
-  const saveMutation = useSaveResumeMutation();
+  const { mutateAsync, isPending } = useSaveResumeMutation();
 
   const lastSavedRef = useRef<string>('');
   const isInitializedRef = useRef(false);
+  const inFlightRef = useRef(false);
+  const mutateAsyncRef = useRef(mutateAsync);
+  const sanitizeRef = useRef(sanitizeForSave);
+  const getValuesRef = useRef(getValues);
+
+  mutateAsyncRef.current = mutateAsync;
+  sanitizeRef.current = sanitizeForSave;
+  getValuesRef.current = getValues;
+
   const [saveStatus, setSaveStatus] = useState<SaveStatus>('idle');
   const [lastSavedAt, setLastSavedAt] = useState<string | null>(null);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [isSynced, setIsSynced] = useState(true);
 
-  const seedLastSaved = useCallback(
-    (snapshot: ResumeSnapshot, savedAt?: string | null) => {
-      const sanitized = sanitizeForSave(snapshot);
-      lastSavedRef.current = serializeSnapshot(sanitized);
-      isInitializedRef.current = true;
-      if (savedAt) setLastSavedAt(savedAt);
-    },
-    [sanitizeForSave]
-  );
+  const hashValues = useCallback((values: ResumeSnapshot) => {
+    return serializeSnapshot(sanitizeRef.current(values));
+  }, []);
+
+  const seedLastSaved = useCallback((snapshot: ResumeSnapshot, savedAt?: string | null) => {
+    lastSavedRef.current = hashValues(snapshot);
+    isInitializedRef.current = true;
+    setIsSynced(true);
+    if (savedAt) setLastSavedAt(savedAt);
+  }, [hashValues]);
 
   const performSave = useCallback(
     async (values: ResumeSnapshot, silent = true) => {
-      const content = sanitizeForSave(values);
+      const content = sanitizeRef.current(values);
       const serialized = serializeSnapshot(content);
 
       if (serialized === lastSavedRef.current) {
+        setIsSynced(true);
         return { changed: false };
       }
 
+      if (inFlightRef.current) {
+        return { changed: false };
+      }
+
+      inFlightRef.current = true;
+      const previousSaved = lastSavedRef.current;
+      lastSavedRef.current = serialized;
+      setIsSynced(true);
       setSaveStatus('saving');
       setApiError(null);
 
       try {
-        const result = await saveMutation.mutateAsync({
+        const result = await mutateAsyncRef.current({
           resumeId,
           content,
           silent,
         });
-        lastSavedRef.current = serializeSnapshot(
-          sanitizeForSave(result.resume.draft as ResumeSnapshot)
-        );
         const savedAt = result.resume.lastSavedAt ?? new Date().toISOString();
         setLastSavedAt(savedAt);
         setSaveStatus('saved');
-        onSaved?.(result.resume);
         return { changed: result.changed, lastSavedAt: savedAt, resume: result.resume };
       } catch (err) {
+        lastSavedRef.current = previousSaved;
+        setIsSynced(false);
         setSaveStatus('error');
         setApiError(handleApiError(err).message);
         if (!silent) throw err;
         return null;
+      } finally {
+        inFlightRef.current = false;
       }
     },
-    [resumeId, sanitizeForSave, saveMutation, onSaved]
+    [resumeId]
   );
 
   const flushSave = useCallback(
@@ -100,13 +116,38 @@ export function useAutoSaveResume({
   }, [saveStatus]);
 
   useEffect(() => {
-    if (!isReady || !enabled || !isInitializedRef.current) return;
+    if (!isReady || !enabled) return;
 
-    const serialized = serializeSnapshot(sanitizeForSave(debouncedValues));
-    if (serialized === lastSavedRef.current) return;
+    let timer: number | undefined;
 
-    void performSave(debouncedValues, true);
-  }, [debouncedValues, isReady, enabled, sanitizeForSave, performSave]);
+    const scheduleSave = () => {
+      window.clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        if (!isInitializedRef.current) return;
+        if (inFlightRef.current) {
+          scheduleSave();
+          return;
+        }
+        void performSave(getValuesRef.current(), true);
+      }, debounceMs);
+    };
+
+    const subscription = watch((values) => {
+      if (!isInitializedRef.current) return;
+      const serialized = hashValues(values as ResumeSnapshot);
+      setIsSynced(serialized === lastSavedRef.current);
+      if (serialized === lastSavedRef.current) {
+        window.clearTimeout(timer);
+        return;
+      }
+      scheduleSave();
+    });
+
+    return () => {
+      subscription.unsubscribe();
+      window.clearTimeout(timer);
+    };
+  }, [watch, isReady, enabled, debounceMs, performSave, hashValues]);
 
   return {
     saveStatus,
@@ -117,6 +158,7 @@ export function useAutoSaveResume({
     setApiError,
     seedLastSaved,
     flushSave,
-    isSaving: saveMutation.isPending,
+    isSaving: isPending,
+    hasUnsavedChanges: !isSynced,
   };
 }
