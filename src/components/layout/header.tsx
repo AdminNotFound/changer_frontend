@@ -19,7 +19,7 @@ export function Header() {
   const navLinks = [
     { href: '/', label: 'My Resumes' },
     { href: '/edit', label: 'Edit Resume' },
-    { href: '/check-score', label: 'Check Score' },
+    { href: '/ats', label: 'Check Score' },
     { href: '/tailor', label: 'Tailor for Job' },
     { href: '/settings', label: 'Settings' },
   ];
