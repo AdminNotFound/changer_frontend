@@ -1,14 +1,7 @@
 'use client';
 
-import { Mail } from 'lucide-react';
-import { ComingSoonPage } from '@/components/common/coming-soon-page';
+import { CoverLettersPage } from '@/features/cover-letters/components/cover-letters-page';
 
-export default function CoverLettersPage() {
-  return (
-    <ComingSoonPage
-      title="Cover Letters"
-      description="Generate and manage cover letters matched to your tailored resumes."
-      icon={Mail}
-    />
-  );
+export default function CoverLettersRoutePage() {
+  return <CoverLettersPage />;
 }
