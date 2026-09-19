@@ -5,7 +5,7 @@ import type { ResumeSnapshot } from '@/features/resume/schemas/resume-snapshot-s
 import { handleApiError } from '@/lib/api/error';
 import { useUIStore } from '@/stores/ui-store';
 import { resumeApi } from '../api/resume-api';
-import { resumeKeys } from './resume-keys';
+import { dashboardKeys, resumeKeys } from './resume-keys';
 import type { PublicResume } from '@/types/resume';
 
 export type SaveResumeInput = {
@@ -35,6 +35,9 @@ export function useSaveResumeMutation() {
       });
       if (!silent) {
         void queryClient.invalidateQueries({ queryKey: resumeKeys.lists() });
+      }
+      if (data.changed) {
+        void queryClient.invalidateQueries({ queryKey: dashboardKeys.statistics() });
       }
       if (data.changed && !silent) {
         addToast({ type: 'success', message: 'Resume saved successfully' });

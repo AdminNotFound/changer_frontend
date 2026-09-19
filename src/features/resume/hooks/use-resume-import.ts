@@ -5,8 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { ImportConfirmInput, ImportJobStatus } from '@/types/resume-import';
 import { useUIStore } from '@/stores/ui-store';
 import { importApi } from '../api/import-api';
-import { importKeys } from './resume-keys';
-import { resumeKeys } from './resume-keys';
+import { dashboardKeys, importKeys, resumeKeys } from './resume-keys';
 
 const POLLING_STATUSES: ImportJobStatus[] = [
   'queued',
@@ -49,6 +48,7 @@ export function useConfirmImportMutation() {
     mutationFn: (input: ImportConfirmInput) => importApi.confirmImport(input),
     onSuccess: (data) => {
       void queryClient.invalidateQueries({ queryKey: resumeKeys.lists() });
+      void queryClient.invalidateQueries({ queryKey: dashboardKeys.statistics() });
       addToast({ type: 'success', message: 'Resume imported successfully' });
       router.push(`/edit/${data.resume.id}`);
     },

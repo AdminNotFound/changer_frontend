@@ -49,22 +49,26 @@ export type MyResumesQuery = {
   templateId?: string;
 };
 
+export type RecentActivityType =
+  | 'resume_updated'
+  | 'version_created'
+  | 'ats_scored'
+  | 'tailored'
+  | 'cover_letter';
+
+export type RecentActivityItem = {
+  type: RecentActivityType;
+  id: string;
+  resumeId?: string;
+  title: string;
+  occurredAt: string;
+};
+
 export type DashboardStatistics = {
   totalResumes: number;
   totalVersions: number;
   averageAtsScore: number | null;
-  recentActivity: Array<{
-    type:
-      | 'resume_updated'
-      | 'version_created'
-      | 'ats_scored'
-      | 'tailored'
-      | 'cover_letter';
-    id: string;
-    resumeId?: string;
-    title: string;
-    occurredAt: string;
-  }>;
+  recentActivity: RecentActivityItem[];
 };
 
 export type { ResumeSnapshot };
