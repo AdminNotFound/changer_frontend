@@ -10,6 +10,7 @@ type TemplateVariant = 'modern' | 'classic' | 'minimal';
 type PreviewSectionsProps = {
   snapshot: ResumeSnapshot;
   templateId: string;
+  highlightedSections?: string[];
 };
 
 function getVariant(templateId: string): TemplateVariant {
@@ -17,8 +18,13 @@ function getVariant(templateId: string): TemplateVariant {
   return 'modern';
 }
 
-export function PreviewSections({ snapshot, templateId }: PreviewSectionsProps) {
+export function PreviewSections({
+  snapshot,
+  templateId,
+  highlightedSections,
+}: PreviewSectionsProps) {
   const variant = getVariant(templateId);
+  const highlighted = (key: string) => highlightedSections?.includes(key) ?? false;
   const info = snapshot.personalInfo ?? {};
   const name = info.fullName?.trim() || 'Your Name';
   const contact = contactLine(snapshot);
@@ -60,19 +66,19 @@ export function PreviewSections({ snapshot, templateId }: PreviewSectionsProps) 
       </header>
 
       {snapshot.summary?.trim() ? (
-        <PreviewBlock title="Summary" variant={variant}>
+        <PreviewBlock title="Summary" variant={variant} highlighted={highlighted('summary')}>
           <p className="whitespace-pre-wrap">{snapshot.summary}</p>
         </PreviewBlock>
       ) : null}
 
       {(snapshot.skills ?? []).some((s) => s.trim()) ? (
-        <PreviewBlock title="Skills" variant={variant}>
+        <PreviewBlock title="Skills" variant={variant} highlighted={highlighted('skills')}>
           <p>{(snapshot.skills ?? []).filter(Boolean).join(' • ')}</p>
         </PreviewBlock>
       ) : null}
 
       {(snapshot.experience ?? []).length > 0 ? (
-        <PreviewBlock title="Experience" variant={variant}>
+        <PreviewBlock title="Experience" variant={variant} highlighted={highlighted('experience')}>
           <div className="space-y-4">
             {(snapshot.experience ?? []).map((item, i) => {
               const heading =
@@ -101,7 +107,7 @@ export function PreviewSections({ snapshot, templateId }: PreviewSectionsProps) 
       ) : null}
 
       {(snapshot.education ?? []).length > 0 ? (
-        <PreviewBlock title="Education" variant={variant}>
+        <PreviewBlock title="Education" variant={variant} highlighted={highlighted('education')}>
           <div className="space-y-3">
             {(snapshot.education ?? []).map((item, i) => {
               const heading =
@@ -129,7 +135,7 @@ export function PreviewSections({ snapshot, templateId }: PreviewSectionsProps) 
       ) : null}
 
       {(snapshot.projects ?? []).length > 0 ? (
-        <PreviewBlock title="Projects" variant={variant}>
+        <PreviewBlock title="Projects" variant={variant} highlighted={highlighted('projects')}>
           <div className="space-y-3">
             {(snapshot.projects ?? []).map((item, i) => (
               <div key={i}>
@@ -154,7 +160,11 @@ export function PreviewSections({ snapshot, templateId }: PreviewSectionsProps) 
       ) : null}
 
       {(snapshot.certifications ?? []).length > 0 ? (
-        <PreviewBlock title="Certifications" variant={variant}>
+        <PreviewBlock
+          title="Certifications"
+          variant={variant}
+          highlighted={highlighted('certifications')}
+        >
           <div className="space-y-2">
             {(snapshot.certifications ?? []).map((item, i) => {
               const label = [item.name, item.issuer, item.date].filter(Boolean).join(' — ');
@@ -183,14 +193,20 @@ export function PreviewSections({ snapshot, templateId }: PreviewSectionsProps) 
 function PreviewBlock({
   title,
   variant,
+  highlighted,
   children,
 }: {
   title: string;
   variant: TemplateVariant;
+  highlighted?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <section>
+    <section
+      className={cn(
+        highlighted && '-mx-1 rounded-lg bg-amber-50/80 px-1 ring-1 ring-amber-200'
+      )}
+    >
       {variant === 'classic' ? <hr className="mb-2 border-gray-300" /> : null}
       <h2
         className={cn(
