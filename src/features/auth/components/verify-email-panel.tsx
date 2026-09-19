@@ -10,12 +10,14 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { handleApiError } from '@/lib/api/error';
-import { authApi } from '../api/auth-api';
 import {
   ResendVerificationFormData,
   resendVerificationSchema,
 } from '../schemas/auth-schemas';
-import { useResendVerificationMutation } from '../hooks/use-auth-mutations';
+import {
+  useResendVerificationMutation,
+  useVerifyEmailMutation,
+} from '../hooks/use-auth-mutations';
 
 type VerifyState = 'loading' | 'success' | 'error' | 'missing';
 
@@ -23,6 +25,7 @@ export function VerifyEmailPanel() {
   const searchParams = useSearchParams();
   const token = searchParams.get('token') ?? '';
   const resendMutation = useResendVerificationMutation();
+  const verifyMutation = useVerifyEmailMutation();
   const [state, setState] = useState<VerifyState>(token ? 'loading' : 'missing');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const attempted = useRef(false);
@@ -33,7 +36,7 @@ export function VerifyEmailPanel() {
 
     const run = async () => {
       try {
-        await authApi.verifyEmail(token);
+        await verifyMutation.mutateAsync(token);
         setState('success');
       } catch (err) {
         const apiErr = handleApiError(err);
@@ -43,7 +46,7 @@ export function VerifyEmailPanel() {
     };
 
     void run();
-  }, [token]);
+  }, [token, verifyMutation]);
 
   const {
     register,

@@ -106,7 +106,7 @@ export function CreateResumeDialog({
             {errors.title && (
               <p className="text-xs text-red-600 font-medium">{errors.title.message}</p>
             )}
-            <p className="text-[11px] text-gray-400">
+            <p className="text-xs text-gray-500">
               Leave blank to use “Untitled Resume”. Template defaults to Modern.
             </p>
           </div>

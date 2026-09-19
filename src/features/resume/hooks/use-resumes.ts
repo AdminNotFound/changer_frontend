@@ -2,8 +2,9 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
+import { dashboardKeys } from '@/features/dashboard/hooks/dashboard-keys';
 import { resumeApi } from '../api/resume-api';
-import { dashboardKeys, resumeKeys } from './resume-keys';
+import { resumeKeys } from './resume-keys';
 import { useUIStore } from '@/stores/ui-store';
 import type { CreateResumeInput, MyResumesQuery } from '@/types/resume';
 

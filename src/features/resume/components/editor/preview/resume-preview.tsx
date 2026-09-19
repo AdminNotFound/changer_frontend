@@ -28,14 +28,14 @@ export function ResumePreview({ templateId }: ResumePreviewProps) {
     <div className="sticky top-20">
       <div className="mb-3 flex items-center justify-between">
         <h2 className="text-sm font-bold text-gray-900">Live preview</h2>
-        <span className="text-[11px] text-gray-400 capitalize">{templateId} template</span>
+        <span className="text-xs text-gray-500 capitalize">{templateId} template</span>
       </div>
       <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
         <div className="aspect-[8.5/11] overflow-y-auto p-6 sm:p-8">
           {hasContent ? (
             <PreviewSections snapshot={snapshot} templateId={templateId} />
           ) : (
-            <div className="flex h-full min-h-[320px] flex-col items-center justify-center text-center text-gray-400">
+            <div className="flex h-full min-h-[320px] flex-col items-center justify-center text-center text-gray-500">
               <p className="text-sm font-medium">Your resume preview</p>
               <p className="mt-1 max-w-[200px] text-xs">
                 Start filling in sections to see your resume come to life.

@@ -3,15 +3,19 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { AlertTriangle, RefreshCw, Sparkles } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { SafetyBanner } from '@/components/common/safety-banner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { handleApiError } from '@/lib/api/error';
+import { isJobPollingStatus } from '@/lib/api/job-polling';
 import { useUIStore } from '@/stores/ui-store';
+import { dashboardKeys } from '@/features/dashboard/hooks/dashboard-keys';
 import { resumeApi } from '@/features/resume/api/resume-api';
-import { dashboardKeys, resumeKeys } from '@/features/resume/hooks/resume-keys';
-import { normalizeResumeSnapshot } from '@/features/resume/schemas/resume-snapshot-schema';
-import type { ResumeSnapshot } from '@/features/resume/schemas/resume-snapshot-schema';
-import type { TailorJobStatus } from '@/types/resume-tailoring';
+import { resumeKeys } from '@/features/resume/hooks/resume-keys';
+import {
+  normalizeResumeSnapshot,
+  type ResumeSnapshot,
+} from '@/features/resume/schemas/resume-snapshot-schema';
 import {
   useEnqueueTailorMutation,
   useRetryTailorJobMutation,
@@ -23,15 +27,7 @@ import { TailorCompare } from './tailor-compare';
 import { TailorForm, type TailorFormSubmit } from './tailor-form';
 import { TailorProcessing } from './tailor-processing';
 import { TailorRecentList } from './tailor-recent-list';
-import { TailorSafetyBanner } from './tailor-safety-banner';
 import { TailorVersionBar } from './tailor-version-bar';
-
-const POLLING_STATUSES: TailorJobStatus[] = [
-  'queued',
-  'waiting',
-  'active',
-  'delayed',
-];
 
 type Baseline = {
   resumeId: string;
@@ -57,7 +53,7 @@ export function TailorResumePage() {
   const job = jobQuery.data ?? null;
   const result = job?.status === 'completed' ? job.result : null;
 
-  const isPolling = Boolean(job && POLLING_STATUSES.includes(job.status));
+  const isPolling = Boolean(job && isJobPollingStatus(job.status));
   const isBusy =
     isCapturing || enqueue.isPending || retryJob.isPending || isPolling;
 
@@ -81,7 +77,10 @@ export function TailorResumePage() {
     setJobId(null);
     setIsCapturing(true);
     try {
-      const resume = await resumeApi.getById(payload.resumeId);
+      const resume = await queryClient.fetchQuery({
+        queryKey: resumeKeys.detail(payload.resumeId),
+        queryFn: () => resumeApi.getById(payload.resumeId),
+      });
       setBaseline({
         resumeId: resume.id,
         original: normalizeResumeSnapshot(resume.draft),
@@ -132,7 +131,7 @@ export function TailorResumePage() {
         </p>
       </div>
 
-      <TailorSafetyBanner />
+      <SafetyBanner description="Tailoring only rewrites existing content. It will not add companies, jobs, education, or certifications that were not already on your resume. Review the result before you use it." />
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,22rem)_1fr]">
         <div className="space-y-6">

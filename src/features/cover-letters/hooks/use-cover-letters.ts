@@ -4,9 +4,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { handleApiError } from '@/lib/api/error';
 import { downloadBlob } from '@/lib/utils/download-blob';
 import { useUIStore } from '@/stores/ui-store';
-import { dashboardKeys } from '@/features/resume/hooks/resume-keys';
+import { jobPollInterval } from '@/lib/api/job-polling';
+import { dashboardKeys } from '@/features/dashboard/hooks/dashboard-keys';
 import type {
-  CoverLetterJobStatus,
   CoverLettersQuery,
   GenerateCoverLetterInput,
   PublicCoverLetter,
@@ -16,13 +16,6 @@ import type {
 import { coverLetterApi } from '../api/cover-letter-api';
 import { coverLetterFileName } from '../utils/file-name';
 import { coverLetterKeys } from './cover-letter-keys';
-
-const POLLING_STATUSES: CoverLetterJobStatus[] = [
-  'queued',
-  'waiting',
-  'active',
-  'delayed',
-];
 
 export function useCoverLetters(query: CoverLettersQuery = {}) {
   return useQuery({
@@ -75,11 +68,7 @@ export function useCoverLetterJobPolling(jobId: string | null, enabled = true) {
     queryKey: coverLetterKeys.job(jobId ?? ''),
     queryFn: () => coverLetterApi.getJobStatus(jobId!),
     enabled: Boolean(jobId) && enabled,
-    refetchInterval: (query) => {
-      const status = query.state.data?.status;
-      if (!status) return 1500;
-      return POLLING_STATUSES.includes(status) ? 1500 : false;
-    },
+    refetchInterval: (query) => jobPollInterval(query.state.data?.status),
   });
 }
 

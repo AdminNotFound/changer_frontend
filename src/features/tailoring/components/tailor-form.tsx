@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Loader2, Sparkles } from 'lucide-react';
+import { QueryErrorRetry } from '@/components/common/query-error-retry';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -27,7 +28,7 @@ export function TailorForm({ onSubmit, isSubmitting }: TailorFormProps) {
   const [jobDescription, setJobDescription] = useState('');
   const [errors, setErrors] = useState<{ resumeId?: string; jobDescription?: string }>({});
 
-  const { data, isLoading, isError, error } = useMyResumes({
+  const { data, isLoading, isError, error, refetch } = useMyResumes({
     page: 1,
     limit: 50,
     sortBy: 'updatedAt',
@@ -82,7 +83,10 @@ export function TailorForm({ onSubmit, isSubmitting }: TailorFormProps) {
             {isLoading ? (
               <div className="h-11 animate-pulse rounded-xl bg-gray-100" />
             ) : isError ? (
-              <p className="text-sm text-red-600">{handleApiError(error).message}</p>
+              <QueryErrorRetry
+                message={handleApiError(error).message}
+                onRetry={() => void refetch()}
+              />
             ) : resumes.length === 0 ? (
               <p className="text-sm text-gray-500">
                 No resumes yet.{' '}
@@ -100,7 +104,7 @@ export function TailorForm({ onSubmit, isSubmitting }: TailorFormProps) {
                   if (errors.resumeId) setErrors((prev) => ({ ...prev, resumeId: undefined }));
                 }}
                 disabled={isSubmitting}
-                className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <option value="">Select a resume…</option>
                 {resumes.map((resume) => (
@@ -136,9 +140,9 @@ export function TailorForm({ onSubmit, isSubmitting }: TailorFormProps) {
               {errors.jobDescription ? (
                 <p className="text-xs font-medium text-red-600">{errors.jobDescription}</p>
               ) : (
-                <p className="text-xs text-gray-400">At least {MIN_JD_LENGTH} characters.</p>
+                <p className="text-xs text-gray-500">At least {MIN_JD_LENGTH} characters.</p>
               )}
-              <p className="text-xs tabular-nums text-gray-400">
+              <p className="text-xs tabular-nums text-gray-500">
                 {jobDescription.trim().length}
               </p>
             </div>

@@ -2,7 +2,7 @@
 
 import { RouteErrorFallback } from '@/components/common/route-error-fallback';
 
-export default function ErrorPage({
+export default function DashboardError({
   error,
   reset,
 }: {

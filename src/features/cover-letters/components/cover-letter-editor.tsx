@@ -10,7 +10,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils/cn';
 import { handleApiError } from '@/lib/api/error';
-import { formatVersionDate } from '@/features/resume/utils/version-format';
+import { formatVersionDate } from '@/lib/utils/date-format';
 import {
   COVER_LETTER_TONE_LABELS,
   COVER_LETTER_TONES,
@@ -58,6 +58,7 @@ export function CoverLetterEditor({
   const [tone, setTone] = useState<CoverLetterTone>(letter?.tone ?? 'formal');
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [titleError, setTitleError] = useState<string | null>(null);
+  const [contentError, setContentError] = useState<string | null>(null);
 
   if (letterStamp !== draftStamp) {
     setDraftStamp(letterStamp);
@@ -65,6 +66,7 @@ export function CoverLetterEditor({
     setContent(letter?.content ?? '');
     setTone(letter?.tone ?? 'formal');
     setTitleError(null);
+    setContentError(null);
   }
 
   const isDirty = Boolean(
@@ -88,8 +90,10 @@ export function CoverLetterEditor({
     }
     const trimmedContent = content.trim();
     if (!trimmedContent) {
+      setContentError('Letter cannot be empty.');
       return;
     }
+    setContentError(null);
     saveMutation.mutate({
       resumeId: letter.resumeId,
       coverLetterId: letter.id,
@@ -208,13 +212,15 @@ export function CoverLetterEditor({
             ) : null}
           </div>
 
-          <div>
+          <div role="radiogroup" aria-label="Writing style">
             <p className="mb-1.5 text-sm font-medium text-gray-700">Writing style</p>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {COVER_LETTER_TONES.map((option) => (
                 <button
                   key={option}
                   type="button"
+                  role="radio"
+                  aria-checked={tone === option}
                   disabled={busy}
                   onClick={() => setTone(option)}
                   className={cn(
@@ -228,7 +234,7 @@ export function CoverLetterEditor({
                 </button>
               ))}
             </div>
-            <p className="mt-1.5 text-xs text-gray-400">
+            <p className="mt-1.5 text-xs text-gray-500">
               Style applies the next time you regenerate.
             </p>
           </div>
@@ -240,17 +246,27 @@ export function CoverLetterEditor({
             <Textarea
               id="cover-letter-editor-body"
               value={content}
-              onChange={(e) => setContent(e.target.value)}
+              onChange={(e) => {
+                setContent(e.target.value);
+                if (contentError) setContentError(null);
+              }}
               className="min-h-[360px] font-[Georgia,Cambria,'Times_New_Roman',serif] leading-7"
               disabled={busy}
+              aria-invalid={contentError ? true : undefined}
+              aria-describedby={contentError ? 'cover-letter-editor-body-error' : undefined}
             />
+            {contentError ? (
+              <p id="cover-letter-editor-body-error" className="mt-1.5 text-xs font-medium text-red-600" role="alert">
+                {contentError}
+              </p>
+            ) : null}
           </div>
 
           <div className="flex flex-wrap gap-2">
             <Button
               type="button"
               onClick={handleSave}
-              disabled={busy || !isDirty || !content.trim()}
+              disabled={busy || !isDirty}
             >
               {saveMutation.isPending ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

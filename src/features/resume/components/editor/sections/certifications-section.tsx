@@ -19,7 +19,7 @@ const emptyCertification = {
 };
 
 export function CertificationsSection() {
-  const { control, register } = useFormContext<ResumeSnapshot>();
+  const { control, register, formState: { errors } } = useFormContext<ResumeSnapshot>();
   const { fields, append, remove, move } = useFieldArray({
     control,
     name: 'certifications',
@@ -45,6 +45,7 @@ export function CertificationsSection() {
                     size="sm"
                     className="px-2.5"
                     onClick={() => setRemoveIndex(index)}
+                    aria-label={`Remove certification ${index + 1}`}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -59,7 +60,7 @@ export function CertificationsSection() {
                   <FieldRow label="Date">
                     <Input placeholder="2024" {...register(`certifications.${index}.date`)} />
                   </FieldRow>
-                  <FieldRow label="URL">
+                  <FieldRow label="URL" error={errors.certifications?.[index]?.url?.message}>
                     <Input placeholder="https://..." {...register(`certifications.${index}.url`)} />
                   </FieldRow>
                 </div>

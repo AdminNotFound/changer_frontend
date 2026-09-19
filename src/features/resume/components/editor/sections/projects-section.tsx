@@ -21,7 +21,7 @@ const emptyProject = {
 };
 
 export function ProjectsSection() {
-  const { control, register } = useFormContext<ResumeSnapshot>();
+  const { control, register, formState: { errors } } = useFormContext<ResumeSnapshot>();
   const { fields, append, remove, move } = useFieldArray({
     control,
     name: 'projects',
@@ -47,6 +47,7 @@ export function ProjectsSection() {
                     size="sm"
                     className="px-2.5"
                     onClick={() => setRemoveIndex(index)}
+                    aria-label={`Remove project ${index + 1}`}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
@@ -55,7 +56,7 @@ export function ProjectsSection() {
                   <FieldRow label="Project name">
                     <Input placeholder="Portfolio App" {...register(`projects.${index}.name`)} />
                   </FieldRow>
-                  <FieldRow label="URL">
+                  <FieldRow label="URL" error={errors.projects?.[index]?.url?.message}>
                     <Input placeholder="https://github.com/..." {...register(`projects.${index}.url`)} />
                   </FieldRow>
                 </div>

@@ -27,8 +27,3 @@ export const pdfKeys = {
   all: ['pdf'] as const,
   job: (jobId: string) => [...pdfKeys.all, 'job', jobId] as const,
 };
-
-export const dashboardKeys = {
-  all: ['dashboard'] as const,
-  statistics: () => [...dashboardKeys.all, 'statistics'] as const,
-};

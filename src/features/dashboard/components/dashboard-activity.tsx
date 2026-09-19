@@ -13,7 +13,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { EmptyState } from '@/components/common/empty-state';
-import { formatVersionDate } from '@/features/resume/utils/version-format';
+import { formatVersionDate } from '@/lib/utils/date-format';
 import { CreateResumeDialog } from '@/features/resume/components/create-resume-dialog';
 import type { RecentActivityItem, RecentActivityType } from '@/types/resume';
 import { formatActivityType, getActivityHref } from '../utils/activity';

@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Skeleton } from '@/components/ui/skeleton';
 import { handleApiError } from '@/lib/api/error';
-import { formatVersionDate } from '@/features/resume/utils/version-format';
+import { formatVersionDate } from '@/lib/utils/date-format';
 import {
   COVER_LETTER_TONE_LABELS,
   type DashboardCoverLetterItem,

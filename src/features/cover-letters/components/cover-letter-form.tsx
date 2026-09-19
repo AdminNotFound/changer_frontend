@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Loader2, Sparkles } from 'lucide-react';
+import { QueryErrorRetry } from '@/components/common/query-error-retry';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -42,7 +43,7 @@ export function CoverLetterForm({ onSubmit, isSubmitting }: CoverLetterFormProps
     jobDescription?: string;
   }>({});
 
-  const { data, isLoading, isError, error } = useMyResumes({
+  const { data, isLoading, isError, error, refetch } = useMyResumes({
     page: 1,
     limit: 50,
     sortBy: 'updatedAt',
@@ -106,7 +107,10 @@ export function CoverLetterForm({ onSubmit, isSubmitting }: CoverLetterFormProps
             {isLoading ? (
               <div className="h-11 animate-pulse rounded-xl bg-gray-100" />
             ) : isError ? (
-              <p className="text-sm text-red-600">{handleApiError(error).message}</p>
+              <QueryErrorRetry
+                message={handleApiError(error).message}
+                onRetry={() => void refetch()}
+              />
             ) : resumes.length === 0 ? (
               <p className="text-sm text-gray-500">
                 No resumes yet.{' '}
@@ -141,7 +145,7 @@ export function CoverLetterForm({ onSubmit, isSubmitting }: CoverLetterFormProps
 
           <div>
             <label htmlFor="cover-letter-title" className="mb-1.5 block text-sm font-medium text-gray-700">
-              Title <span className="font-normal text-gray-400">(optional)</span>
+              Title <span className="font-normal text-gray-500">(optional)</span>
             </label>
             <Input
               id="cover-letter-title"
@@ -159,13 +163,17 @@ export function CoverLetterForm({ onSubmit, isSubmitting }: CoverLetterFormProps
             ) : null}
           </div>
 
-          <div>
-            <p className="mb-1.5 text-sm font-medium text-gray-700">Writing style</p>
+          <div role="radiogroup" aria-label="Writing style">
+            <p id="cover-letter-tone-label" className="mb-1.5 text-sm font-medium text-gray-700">
+              Writing style
+            </p>
             <div className="grid grid-cols-2 gap-2">
               {COVER_LETTER_TONES.map((option) => (
                 <button
                   key={option}
                   type="button"
+                  role="radio"
+                  aria-checked={tone === option}
                   disabled={isSubmitting}
                   onClick={() => setTone(option)}
                   className={cn(
@@ -202,9 +210,9 @@ export function CoverLetterForm({ onSubmit, isSubmitting }: CoverLetterFormProps
               {errors.jobDescription ? (
                 <p className="text-xs font-medium text-red-600">{errors.jobDescription}</p>
               ) : (
-                <p className="text-xs text-gray-400">At least {MIN_JD_LENGTH} characters.</p>
+                <p className="text-xs text-gray-500">At least {MIN_JD_LENGTH} characters.</p>
               )}
-              <p className="text-xs tabular-nums text-gray-400">
+              <p className="text-xs tabular-nums text-gray-500">
                 {jobDescription.trim().length}
               </p>
             </div>

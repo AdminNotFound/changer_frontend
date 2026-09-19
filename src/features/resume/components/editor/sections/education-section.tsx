@@ -22,7 +22,7 @@ const emptyEducation = {
 };
 
 export function EducationSection() {
-  const { control, register } = useFormContext<ResumeSnapshot>();
+  const { control, register, formState: { errors } } = useFormContext<ResumeSnapshot>();
   const { fields, append, remove, move } = useFieldArray({
     control,
     name: 'education',
@@ -48,12 +48,13 @@ export function EducationSection() {
                     size="sm"
                     className="px-2.5"
                     onClick={() => setRemoveIndex(index)}
+                    aria-label={`Remove education ${index + 1}`}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
                 <div className="grid gap-3 sm:grid-cols-2">
-                  <FieldRow label="Institution">
+                  <FieldRow label="Institution" error={errors.education?.[index]?.institution?.message}>
                     <Input placeholder="University name" {...register(`education.${index}.institution`)} />
                   </FieldRow>
                   <FieldRow label="Degree">

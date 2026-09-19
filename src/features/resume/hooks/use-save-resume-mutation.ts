@@ -4,8 +4,9 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type { ResumeSnapshot } from '@/features/resume/schemas/resume-snapshot-schema';
 import { handleApiError } from '@/lib/api/error';
 import { useUIStore } from '@/stores/ui-store';
+import { dashboardKeys } from '@/features/dashboard/hooks/dashboard-keys';
 import { resumeApi } from '../api/resume-api';
-import { dashboardKeys, resumeKeys } from './resume-keys';
+import { resumeKeys } from './resume-keys';
 import type { PublicResume } from '@/types/resume';
 
 export type SaveResumeInput = {

@@ -44,6 +44,7 @@ export function SocialLinksSection() {
                     size="sm"
                     className="px-2.5"
                     onClick={() => setRemoveIndex(index)}
+                    aria-label={`Remove link ${index + 1}`}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

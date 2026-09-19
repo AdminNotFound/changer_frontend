@@ -9,7 +9,7 @@ import { handleApiError } from '@/lib/api/error';
 import { AtsScoreGauge } from '@/features/ats/components/ats-score-gauge';
 import { useAtsHistory } from '@/features/ats/hooks/use-ats-history';
 import { getScoreStroke } from '@/features/ats/utils/score-color';
-import { formatVersionDate } from '@/features/resume/utils/version-format';
+import { formatVersionDate } from '@/lib/utils/date-format';
 
 const ATS_HISTORY_QUERY = {
   page: 1,

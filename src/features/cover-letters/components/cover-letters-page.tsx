@@ -3,13 +3,14 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { AlertTriangle, Mail, RefreshCw } from 'lucide-react';
 import { useQueryClient } from '@tanstack/react-query';
+import { SafetyBanner } from '@/components/common/safety-banner';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { handleApiError } from '@/lib/api/error';
+import { isJobPollingStatus } from '@/lib/api/job-polling';
 import { useUIStore } from '@/stores/ui-store';
-import { dashboardKeys } from '@/features/resume/hooks/resume-keys';
+import { dashboardKeys } from '@/features/dashboard/hooks/dashboard-keys';
 import type {
-  CoverLetterJobStatus,
   CoverLetterTone,
   DashboardCoverLetterItem,
 } from '@/types/cover-letter';
@@ -25,14 +26,6 @@ import { CoverLetterEditor } from './cover-letter-editor';
 import { CoverLetterForm, type CoverLetterFormSubmit } from './cover-letter-form';
 import { CoverLetterList } from './cover-letter-list';
 import { CoverLetterProcessing } from './cover-letter-processing';
-import { CoverLetterSafetyBanner } from './cover-letter-safety-banner';
-
-const POLLING_STATUSES: CoverLetterJobStatus[] = [
-  'queued',
-  'waiting',
-  'active',
-  'delayed',
-];
 
 type SelectedLetter = {
   resumeId: string;
@@ -67,7 +60,7 @@ export function CoverLettersPage() {
   const jobQuery = useCoverLetterJobPolling(jobId);
   const job = jobQuery.data ?? null;
   const result = job?.status === 'completed' ? job.result : null;
-  const isPolling = Boolean(job && POLLING_STATUSES.includes(job.status));
+  const isPolling = Boolean(job && isJobPollingStatus(job.status));
   const isBusy = generate.isPending || regenerate.isPending || retryJob.isPending || isPolling;
 
   const handleDirtyChange = useCallback((dirty: boolean) => {
@@ -237,7 +230,7 @@ export function CoverLettersPage() {
         </p>
       </div>
 
-      <CoverLetterSafetyBanner />
+      <SafetyBanner description="Cover letters only use experience already on your resume. Review the draft before you send it." />
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,22rem)_1fr]">
         <div className="space-y-6">

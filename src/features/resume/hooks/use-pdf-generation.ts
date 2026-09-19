@@ -1,16 +1,29 @@
 'use client';
 
 import { useCallback, useRef, useState } from 'react';
-import { useUIStore } from '@/stores/ui-store';
+import { useQuery } from '@tanstack/react-query';
 import { handleApiError } from '@/lib/api/error';
+import {
+  isJobPollingStatus,
+  JOB_POLL_INTERVAL_MS,
+  MAX_JOB_POLL_ATTEMPTS,
+} from '@/lib/api/job-polling';
+import { downloadBlob, revokeBlobUrl } from '@/lib/utils/download-blob';
+import { useUIStore } from '@/stores/ui-store';
 import type {
   PdfFlowResult,
   PdfGenerationMode,
   PdfGenerationStatus,
   PdfSource,
 } from '@/types/resume-pdf';
-import { downloadBlob, revokeBlobUrl } from '@/lib/utils/download-blob';
-import { runPdfFlow } from '../services/pdf-generation';
+import { pdfApi } from '../api/pdf-api';
+import { enqueuePdfJob, jobToPdfFlowResult } from '../services/pdf-generation';
+import { pdfKeys } from './resume-keys';
+
+type PdfQueryData =
+  | { kind: 'polling' }
+  | { kind: 'preview'; result: PdfFlowResult }
+  | { kind: 'downloaded'; fileName: string };
 
 type UsePdfGenerationOptions = {
   resumeId: string;
@@ -26,60 +39,107 @@ export function usePdfGeneration({
   hasUnsavedChanges = false,
 }: UsePdfGenerationOptions) {
   const addToast = useUIStore((s) => s.addToast);
-  const [status, setStatus] = useState<PdfGenerationStatus>('idle');
-  const [error, setError] = useState<string | null>(null);
-  const [preview, setPreview] = useState<PdfFlowResult | null>(null);
+  const [jobId, setJobId] = useState<string | null>(null);
+  const [enqueueError, setEnqueueError] = useState<string | null>(null);
   const previewBlobUrlRef = useRef<string | null>(null);
+  const pollAttemptsRef = useRef(0);
+  const modeRef = useRef<PdfGenerationMode | null>(null);
 
   const clearPreviewBlob = useCallback(() => {
     revokeBlobUrl(previewBlobUrlRef.current);
     previewBlobUrlRef.current = null;
   }, []);
 
+  const jobQuery = useQuery({
+    queryKey: pdfKeys.job(jobId ?? ''),
+    queryFn: async (): Promise<PdfQueryData> => {
+      pollAttemptsRef.current += 1;
+      if (pollAttemptsRef.current > MAX_JOB_POLL_ATTEMPTS) {
+        throw new Error('PDF generation timed out. Please try again.');
+      }
+
+      const job = await pdfApi.getJobStatus(jobId!);
+
+      if (job.status === 'failed') {
+        throw new Error(job.failedReason || 'PDF generation failed');
+      }
+
+      if (job.status === 'completed') {
+        const result = jobToPdfFlowResult(job);
+        if (modeRef.current === 'download') {
+          downloadBlob(result.blob, result.fileName);
+          revokeBlobUrl(result.blobUrl);
+          addToast({ type: 'success', message: 'PDF downloaded successfully' });
+          return { kind: 'downloaded', fileName: result.fileName };
+        }
+
+        revokeBlobUrl(previewBlobUrlRef.current);
+        previewBlobUrlRef.current = result.blobUrl;
+        addToast({ type: 'success', message: 'PDF ready to preview' });
+        return { kind: 'preview', result };
+      }
+
+      if (!isJobPollingStatus(job.status)) {
+        throw new Error('PDF generation failed');
+      }
+
+      return { kind: 'polling' };
+    },
+    enabled: Boolean(jobId),
+    retry: false,
+    refetchInterval: (query) => {
+      if (query.state.status === 'error') return false;
+      const data = query.state.data;
+      if (data?.kind === 'preview' || data?.kind === 'downloaded') return false;
+      return JOB_POLL_INTERVAL_MS;
+    },
+  });
+
+  const preview =
+    jobQuery.data?.kind === 'preview' ? jobQuery.data.result : null;
+  const queryError = jobQuery.isError
+    ? handleApiError(jobQuery.error).message
+    : null;
+  const error = enqueueError ?? queryError;
+  const status: PdfGenerationStatus = error
+    ? 'error'
+    : jobQuery.data?.kind === 'preview' || jobQuery.data?.kind === 'downloaded'
+      ? 'success'
+      : jobId
+        ? 'generating'
+        : 'idle';
+
   const reset = useCallback(() => {
     clearPreviewBlob();
-    setPreview(null);
-    setError(null);
-    setStatus('idle');
+    setEnqueueError(null);
+    setJobId(null);
+    modeRef.current = null;
+    pollAttemptsRef.current = 0;
   }, [clearPreviewBlob]);
 
   const run = useCallback(
-    async (mode: PdfGenerationMode) => {
-      setStatus('generating');
-      setError(null);
+    async (nextMode: PdfGenerationMode) => {
+      setEnqueueError(null);
+      pollAttemptsRef.current = 0;
+      modeRef.current = nextMode;
+      setJobId(null);
 
       try {
-        const result = await runPdfFlow({
+        const nextJobId = await enqueuePdfJob({
           resumeId,
-          mode,
+          mode: nextMode,
           source,
           flushSave,
           hasUnsavedChanges,
         });
-
-        if (mode === 'download') {
-          downloadBlob(result.blob, result.fileName);
-          revokeBlobUrl(result.blobUrl);
-          setStatus('success');
-          addToast({ type: 'success', message: 'PDF downloaded successfully' });
-          return null;
-        }
-
-        clearPreviewBlob();
-        previewBlobUrlRef.current = result.blobUrl;
-        setPreview(result);
-        setStatus('success');
-        addToast({ type: 'success', message: 'PDF ready to preview' });
-        return result;
+        setJobId(nextJobId);
       } catch (err) {
         const apiError = handleApiError(err);
-        setError(apiError.message);
-        setStatus('error');
+        setEnqueueError(apiError.message);
         addToast({ type: 'error', message: apiError.message });
-        return null;
       }
     },
-    [resumeId, source, flushSave, hasUnsavedChanges, clearPreviewBlob, addToast]
+    [resumeId, source, flushSave, hasUnsavedChanges, addToast]
   );
 
   const previewPdf = useCallback(() => run('preview'), [run]);

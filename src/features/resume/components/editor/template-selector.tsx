@@ -108,7 +108,7 @@ export function TemplateSelector({ resumeId, currentTemplateId }: TemplateSelect
                     disabled={changeTemplate.isPending}
                     onClick={() => handleSelect(template.id)}
                     className={cn(
-                      'group relative flex flex-col rounded-xl border p-3 text-left transition-colors',
+                      'group relative flex flex-col rounded-xl border p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500',
                       isSelected
                         ? 'border-blue-600 bg-blue-50/50 ring-2 ring-blue-600'
                         : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50',

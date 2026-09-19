@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { dashboardApi } from '../api/dashboard-api';
-import { dashboardKeys } from '@/features/resume/hooks/resume-keys';
+import { dashboardKeys } from './dashboard-keys';
 
 export function useDashboardStatistics() {
   return useQuery({

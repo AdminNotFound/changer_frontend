@@ -239,7 +239,7 @@ export function VersionHistoryPanel({
                     {!compareMode ? (
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <Button type="button" variant="ghost" size="sm" className="h-8 w-8 p-0" aria-label={`Version ${version.versionNumber} actions`}>
                             <MoreVertical className="h-4 w-4" />
                           </Button>
                         </DropdownMenuTrigger>

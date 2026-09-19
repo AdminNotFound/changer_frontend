@@ -1,10 +1,9 @@
 'use client';
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { handleApiError } from '@/lib/api/error';
 import { useUIStore } from '@/stores/ui-store';
 import type { AtsScoreInput } from '@/types/ats';
-import { dashboardKeys } from '@/features/resume/hooks/resume-keys';
+import { dashboardKeys } from '@/features/dashboard/hooks/dashboard-keys';
 import { atsApi } from '../api/ats-api';
 import { atsKeys } from './ats-keys';
 
@@ -20,13 +19,6 @@ export function useScoreAtsMutation() {
       addToast({
         type: 'success',
         message: `ATS score calculated: ${result.overallScore}`,
-      });
-    },
-    onError: (error) => {
-      const apiError = handleApiError(error);
-      addToast({
-        type: 'error',
-        message: apiError.message || 'Failed to calculate ATS score',
       });
     },
   });

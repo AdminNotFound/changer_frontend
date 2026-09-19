@@ -18,7 +18,7 @@ function getVariant(templateId: string): TemplateVariant {
   return 'modern';
 }
 
-export function PreviewSections({
+export const PreviewSections = React.memo(function PreviewSections({
   snapshot,
   templateId,
   highlightedSections,
@@ -188,7 +188,7 @@ export function PreviewSections({
       ) : null}
     </div>
   );
-}
+});
 
 function PreviewBlock({
   title,

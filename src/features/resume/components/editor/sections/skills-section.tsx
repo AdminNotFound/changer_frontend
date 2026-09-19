@@ -10,9 +10,11 @@ import { ConfirmRemoveDialog } from '../shared/confirm-remove-dialog';
 import { SectionCard } from '../shared/section-card';
 import { SortableItem, SortableList } from '../shared/sortable-list';
 
+const EMPTY_SKILLS: string[] = [];
+
 export function SkillsSection() {
   const { watch, setValue } = useFormContext<ResumeSnapshot>();
-  const skills = watch('skills') ?? [];
+  const skills = watch('skills') ?? EMPTY_SKILLS;
   const [removeIndex, setRemoveIndex] = useState<number | null>(null);
 
   const ids = useMemo(
@@ -58,6 +60,7 @@ export function SkillsSection() {
                   value={skill}
                   placeholder="e.g. TypeScript, React, Node.js"
                   onChange={(e) => updateSkill(index, e.target.value)}
+                  aria-label={`Skill ${index + 1}`}
                 />
                 <Button
                   type="button"

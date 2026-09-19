@@ -23,7 +23,7 @@ export function SectionCard({
     <section className="rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden">
       <button
         type="button"
-        className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left hover:bg-gray-50/80 transition-colors"
+        className="flex w-full items-center justify-between gap-3 px-4 py-3.5 text-left hover:bg-gray-50/80 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-purple-500"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
       >
@@ -35,7 +35,7 @@ export function SectionCard({
         </div>
         <ChevronDown
           className={cn(
-            'h-4 w-4 shrink-0 text-gray-400 transition-transform',
+            'h-4 w-4 shrink-0 text-gray-500 transition-transform',
             open && 'rotate-180'
           )}
         />

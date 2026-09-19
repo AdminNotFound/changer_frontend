@@ -20,7 +20,7 @@ export function RequireGuest({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     if (status === 'authenticated' && !allowAuthenticated) {
       const next = searchParams.get('next');
-      router.replace(next && next.startsWith('/') ? next : '/');
+      router.replace(next && next.startsWith('/') ? next : '/dashboard');
     }
   }, [status, allowAuthenticated, router, searchParams]);
 

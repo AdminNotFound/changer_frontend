@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { Loader2 } from 'lucide-react';
+import { QueryErrorRetry } from '@/components/common/query-error-retry';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Textarea } from '@/components/ui/textarea';
@@ -22,7 +23,7 @@ export function AtsScoreForm({ onSubmit, isSubmitting }: AtsScoreFormProps) {
   const [jobDescription, setJobDescription] = useState('');
   const [errors, setErrors] = useState<{ resumeId?: string; jobDescription?: string }>({});
 
-  const { data, isLoading, isError, error } = useMyResumes({
+  const { data, isLoading, isError, error, refetch } = useMyResumes({
     page: 1,
     limit: 50,
     sortBy: 'updatedAt',
@@ -74,7 +75,10 @@ export function AtsScoreForm({ onSubmit, isSubmitting }: AtsScoreFormProps) {
             {isLoading ? (
               <div className="h-11 animate-pulse rounded-xl bg-gray-100" />
             ) : isError ? (
-              <p className="text-sm text-red-600">{handleApiError(error).message}</p>
+              <QueryErrorRetry
+                message={handleApiError(error).message}
+                onRetry={() => void refetch()}
+              />
             ) : resumes.length === 0 ? (
               <p className="text-sm text-gray-500">
                 No resumes yet.{' '}
@@ -91,7 +95,9 @@ export function AtsScoreForm({ onSubmit, isSubmitting }: AtsScoreFormProps) {
                   setResumeId(e.target.value);
                   if (errors.resumeId) setErrors((prev) => ({ ...prev, resumeId: undefined }));
                 }}
-                className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="h-11 w-full rounded-xl border border-gray-200 bg-white px-3 text-sm text-gray-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 disabled:cursor-not-allowed disabled:opacity-50"
+                disabled={isSubmitting}
+                aria-invalid={errors.resumeId ? true : undefined}
               >
                 <option value="">Select a resume…</option>
                 {resumes.map((resume) => (
@@ -122,14 +128,18 @@ export function AtsScoreForm({ onSubmit, isSubmitting }: AtsScoreFormProps) {
               placeholder="Paste the full job description here…"
               className="min-h-[220px]"
               disabled={isSubmitting}
+              aria-invalid={errors.jobDescription ? true : undefined}
+              aria-describedby={errors.jobDescription ? 'ats-jd-error' : undefined}
             />
             <div className="mt-1.5 flex items-center justify-between">
               {errors.jobDescription ? (
-                <p className="text-xs font-medium text-red-600">{errors.jobDescription}</p>
+                <p id="ats-jd-error" className="text-xs font-medium text-red-600" role="alert">
+                  {errors.jobDescription}
+                </p>
               ) : (
-                <p className="text-xs text-gray-400">At least {MIN_JD_LENGTH} characters.</p>
+                <p className="text-xs text-gray-500">At least {MIN_JD_LENGTH} characters.</p>
               )}
-              <p className="text-xs tabular-nums text-gray-400">
+              <p className="text-xs tabular-nums text-gray-500">
                 {jobDescription.trim().length}
               </p>
             </div>

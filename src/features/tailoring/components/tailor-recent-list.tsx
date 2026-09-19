@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { handleApiError } from '@/lib/api/error';
-import { formatVersionDate } from '@/features/resume/utils/version-format';
+import { formatVersionDate } from '@/lib/utils/date-format';
 import { useRecentTailored } from '../hooks/use-recent-tailored';
 
 export function TailorRecentList() {

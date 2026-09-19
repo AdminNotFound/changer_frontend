@@ -1,7 +1,5 @@
-'use client';
-
 import React from 'react';
-import { Shell } from '@/components/layout/shell';
+import { DashboardShell } from '@/components/layout/dashboard-shell';
 import { RequireAuth } from '@/features/auth/components/require-auth';
 
 export default function DashboardLayout({
@@ -11,7 +9,7 @@ export default function DashboardLayout({
 }) {
   return (
     <RequireAuth>
-      <Shell>{children}</Shell>
+      <DashboardShell>{children}</DashboardShell>
     </RequireAuth>
   );
 }

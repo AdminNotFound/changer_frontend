@@ -65,20 +65,14 @@ export function ImportUploadStep({
       </div>
 
       <div
-        role="button"
-        tabIndex={0}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter' || e.key === ' ') inputRef.current?.click();
-        }}
         onDragOver={(e) => {
           e.preventDefault();
           setIsDragging(true);
         }}
         onDragLeave={() => setIsDragging(false)}
         onDrop={onDrop}
-        onClick={() => !isUploading && inputRef.current?.click()}
         className={cn(
-          'flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-10 text-center transition-colors cursor-pointer',
+          'flex flex-col items-center justify-center rounded-2xl border-2 border-dashed p-10 text-center transition-colors',
           isDragging
             ? 'border-purple-400 bg-purple-50/80'
             : 'border-gray-200 bg-white/50 hover:border-purple-300 hover:bg-purple-50/30',
@@ -98,19 +92,18 @@ export function ImportUploadStep({
           size="sm"
           className="mt-4"
           disabled={isUploading}
-          onClick={(e) => {
-            e.stopPropagation();
-            inputRef.current?.click();
-          }}
+          onClick={() => inputRef.current?.click()}
         >
           Browse files
         </Button>
         <input
+          id="import-resume-file"
           ref={inputRef}
           type="file"
           accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-          className="hidden"
+          className="sr-only"
           disabled={isUploading}
+          aria-label="Upload resume file"
           onChange={(e) => {
             const file = e.target.files?.[0] ?? null;
             handleFile(file);

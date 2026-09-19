@@ -40,6 +40,7 @@ export function HighlightsList({
             value={item}
             placeholder={placeholder}
             onChange={(e) => updateItem(index, e.target.value)}
+            aria-label={`Highlight ${index + 1}`}
           />
           <Button
             type="button"

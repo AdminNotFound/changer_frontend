@@ -2,17 +2,12 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import type { ImportConfirmInput, ImportJobStatus } from '@/types/resume-import';
+import type { ImportConfirmInput } from '@/types/resume-import';
 import { useUIStore } from '@/stores/ui-store';
+import { jobPollInterval } from '@/lib/api/job-polling';
+import { dashboardKeys } from '@/features/dashboard/hooks/dashboard-keys';
 import { importApi } from '../api/import-api';
-import { dashboardKeys, importKeys, resumeKeys } from './resume-keys';
-
-const POLLING_STATUSES: ImportJobStatus[] = [
-  'queued',
-  'waiting',
-  'active',
-  'delayed',
-];
+import { importKeys, resumeKeys } from './resume-keys';
 
 export function useImportPreviewMutation() {
   return useMutation({
@@ -31,11 +26,7 @@ export function useImportJobPolling(jobId: string | null, enabled = true) {
     queryKey: importKeys.job(jobId ?? ''),
     queryFn: () => importApi.getJobStatus(jobId!),
     enabled: Boolean(jobId) && enabled,
-    refetchInterval: (query) => {
-      const status = query.state.data?.status;
-      if (!status) return 1500;
-      return POLLING_STATUSES.includes(status) ? 1500 : false;
-    },
+    refetchInterval: (query) => jobPollInterval(query.state.data?.status),
   });
 }
 

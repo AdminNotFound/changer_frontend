@@ -1,14 +1,4 @@
-export function formatVersionDate(value: string | null): string {
-  if (!value) return 'Unknown date';
-  try {
-    return new Intl.DateTimeFormat(undefined, {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(value));
-  } catch {
-    return value;
-  }
-}
+export { formatVersionDate } from '@/lib/utils/date-format';
 
 export function formatDiffValue(value: unknown): string {
   if (value === undefined || value === null) return '—';

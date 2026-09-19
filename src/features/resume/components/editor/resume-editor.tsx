@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useState } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { FormProvider, useForm, type FieldPath } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -22,8 +23,15 @@ import { sanitizeForSave } from '@/features/resume/utils/sanitize-resume-snapsho
 import { EditorLayout } from './editor-layout';
 import { EditorSkeleton } from './editor-skeleton';
 import { EditorToolbar } from './editor-toolbar';
-import { PdfPreviewDialog } from './pdf-preview-dialog';
-import { VersionHistoryPanel } from './version-history-panel';
+
+const PdfPreviewDialog = dynamic(
+  () => import('./pdf-preview-dialog').then((mod) => mod.PdfPreviewDialog),
+  { ssr: false }
+);
+
+const VersionHistoryPanel = dynamic(
+  () => import('./version-history-panel').then((mod) => mod.VersionHistoryPanel)
+);
 
 type ResumeEditorProps = {
   resumeId: string;
@@ -120,29 +128,31 @@ export function ResumeEditor({ resumeId }: ResumeEditorProps) {
     [reset, seedLastSaved]
   );
 
-  const onManualSave = handleSubmit(async (values) => {
-    setManualApiError(null);
-    setApiError(null);
-    setSaveStatus('saving');
-    try {
-      await flushSave(values);
-      setSaveStatus('saved');
-    } catch (err) {
-      const parsed = handleApiError(err);
-      setManualApiError(parsed.message);
-      setSaveStatus('error');
-      setApiError(parsed.message);
+  const onManualSave = useCallback(() => {
+    void handleSubmit(async (values) => {
+      setManualApiError(null);
+      setApiError(null);
+      setSaveStatus('saving');
+      try {
+        await flushSave(values);
+        setSaveStatus('saved');
+      } catch (err) {
+        const parsed = handleApiError(err);
+        setManualApiError(parsed.message);
+        setSaveStatus('error');
+        setApiError(parsed.message);
 
-      parsed.errors.forEach((fieldError) => {
-        const path = fieldError.path.split('.').filter(Boolean).join('.');
-        if (path) {
-          form.setError(path as FieldPath<ResumeSnapshot>, {
-            message: fieldError.message,
-          });
-        }
-      });
-    }
-  });
+        parsed.errors.forEach((fieldError) => {
+          const path = fieldError.path.split('.').filter(Boolean).join('.');
+          if (path) {
+            form.setError(path as FieldPath<ResumeSnapshot>, {
+              message: fieldError.message,
+            });
+          }
+        });
+      }
+    })();
+  }, [form, handleSubmit, flushSave, setApiError, setSaveStatus]);
 
   const apiError = manualApiError ?? autoSaveError;
 
@@ -182,7 +192,7 @@ export function ResumeEditor({ resumeId }: ResumeEditorProps) {
           isDirty={hasUnsavedChanges}
           saveStatus={saveStatus}
           apiError={apiError}
-          onSave={() => void onManualSave()}
+          onSave={onManualSave}
           isSaving={isSaving}
           lastSavedAt={lastSavedAt ?? resume.lastSavedAt}
           currentVersionNumber={resume.currentVersionNumber}
@@ -194,24 +204,28 @@ export function ResumeEditor({ resumeId }: ResumeEditorProps) {
         <EditorLayout templateId={resume.templateId} />
       </div>
 
-      <PdfPreviewDialog
-        open={pdfPreviewOpen}
-        onOpenChange={handlePdfPreviewOpenChange}
-        status={pdfStatus}
-        error={pdfError}
-        preview={pdfPreview}
-        onRetry={handlePreviewPdf}
-        onDownload={downloadPreview}
-      />
+      {pdfPreviewOpen || pdfStatus === 'generating' ? (
+        <PdfPreviewDialog
+          open={pdfPreviewOpen}
+          onOpenChange={handlePdfPreviewOpenChange}
+          status={pdfStatus}
+          error={pdfError}
+          preview={pdfPreview}
+          onRetry={handlePreviewPdf}
+          onDownload={downloadPreview}
+        />
+      ) : null}
 
-      <VersionHistoryPanel
-        resumeId={resumeId}
-        templateId={resume.templateId}
-        currentVersionNumber={resume.currentVersionNumber}
-        open={historyOpen}
-        onClose={() => setHistoryOpen(false)}
-        onRestored={handleRestore}
-      />
+      {historyOpen ? (
+        <VersionHistoryPanel
+          resumeId={resumeId}
+          templateId={resume.templateId}
+          currentVersionNumber={resume.currentVersionNumber}
+          open={historyOpen}
+          onClose={() => setHistoryOpen(false)}
+          onRestored={handleRestore}
+        />
+      ) : null}
     </FormProvider>
   );
 }

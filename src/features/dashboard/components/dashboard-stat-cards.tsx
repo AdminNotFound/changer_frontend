@@ -76,7 +76,10 @@ function StatCard({
 
   if (href && !isError) {
     return (
-      <Link href={href} className="block focus-visible:outline-none">
+      <Link
+        href={href}
+        className="block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2"
+      >
         <Card className="h-full transition-colors hover:border-purple-100 hover:shadow-sm">
           {body}
         </Card>

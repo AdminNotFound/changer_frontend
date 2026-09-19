@@ -78,6 +78,7 @@ export function ResumeListPage() {
               setPage(1);
             }}
             placeholder="Search by title…"
+            aria-label="Search resumes by title"
             className="pl-9"
           />
         </div>
@@ -155,7 +156,7 @@ export function ResumeListPage() {
           </div>
 
           {meta && meta.totalPages > 1 && (
-            <div className="flex items-center justify-between gap-3 pt-2">
+            <div className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs text-gray-500">
                 Page {meta.page} of {meta.totalPages} · {meta.total} total
               </p>

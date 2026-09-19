@@ -25,7 +25,7 @@ const emptyExperience = {
 };
 
 export function ExperienceSection() {
-  const { control, register, setValue, watch } = useFormContext<ResumeSnapshot>();
+  const { control, register, setValue, watch, formState: { errors } } = useFormContext<ResumeSnapshot>();
   const { fields, append, remove, move } = useFieldArray({
     control,
     name: 'experience',
@@ -53,15 +53,16 @@ export function ExperienceSection() {
                       size="sm"
                       className="px-2.5"
                       onClick={() => setRemoveIndex(index)}
+                      aria-label={`Remove experience ${index + 1}`}
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <FieldRow label="Job title">
+                    <FieldRow label="Job title" error={errors.experience?.[index]?.title?.message}>
                       <Input placeholder="Software Engineer" {...register(`experience.${index}.title`)} />
                     </FieldRow>
-                    <FieldRow label="Company">
+                    <FieldRow label="Company" error={errors.experience?.[index]?.company?.message}>
                       <Input placeholder="Acme Inc." {...register(`experience.${index}.company`)} />
                     </FieldRow>
                     <FieldRow label="Location">

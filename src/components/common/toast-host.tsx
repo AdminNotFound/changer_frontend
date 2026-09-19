@@ -5,12 +5,18 @@ import { CheckCircle2, AlertTriangle, Info, X } from 'lucide-react';
 import { useUIStore } from '@/stores/ui-store';
 
 export function ToastHost() {
-  const { toasts, removeToast } = useUIStore();
+  const toasts = useUIStore((s) => s.toasts);
+  const removeToast = useUIStore((s) => s.removeToast);
 
   if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full px-4 pointer-events-none">
+    <div
+      className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full px-4 pointer-events-none"
+      role="status"
+      aria-live="polite"
+      aria-relevant="additions"
+    >
       {toasts.map((t) => (
         <div
           key={t.id}
@@ -42,8 +48,8 @@ export function ToastHost() {
           <button
             type="button"
             onClick={() => removeToast(t.id)}
-            className="p-1 hover:opacity-70 rounded-md"
-            aria-label="Dismiss"
+            className="p-1 hover:opacity-70 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
+            aria-label="Dismiss notification"
           >
             <X className="h-4 w-4" />
           </button>
